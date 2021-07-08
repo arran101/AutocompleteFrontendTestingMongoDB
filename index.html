@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+        <script src="//code.jquery.com/jquery-1.12.4.js"></script>
+        <script src="//code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    </head>
+    <body>
+        <div class="ui-widget">
+            <label for="title">Title:</label><br />
+            <input id="title"><br /><br />
+            <label for="rating">IMDB Rating:</label><br />
+            <p id="rating"></p>
+            <label for="fullplot">Plot:</label><br />
+            <p id="fullplot"></p>
+            <label for="genres">Genres:</label><br />
+            <ul id="genres"></ul>
+        </div>
+        <script>
+            $(document).ready(function () {
+                $("#title").autocomplete({
+                    source: async function(request, response) {
+                        let data = await fetch(`http://localhost:3000/search?query=${request.term}`)
+                            .then(results => results.json())
+                            .then(results => results.map(result => {
+                                return { label: result.title, value: result.title, id: result._id };
+                            }));
+                        response(data);
+                    },
+                    minLength: 2,
+                    select: function(event, ui) {
+                        fetch(`http://localhost:3000/get/${ui.item.id}`)
+                            .then(result => result.json())
+                            .then(result => {
+                                console.log(result)
+                                let fullPlotText = result.fullplot;
+                                let ratingText = result.imdb.rating;
+                                $("#rating").empty();
+                                $("#rating").append(`<p>${ratingText}</p>`)
+                                $("#fullplot").empty();
+                                $("#fullplot").append(`<p>${fullPlotText}</p>`)
+                                $("#genres").empty();
+                                result.genres.forEach(genres => {
+                                    $("#genres").append(`<li>${genres}</li>`);
+                                });
+                            });
+                    }
+                });
+            });
+        </script>
+    </body>
+</html>
